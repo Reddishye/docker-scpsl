@@ -3,7 +3,7 @@ LABEL maintainer="Parkeymon, EsserGaming"
 USER root
 
 # Getting the essentials
-RUN apt-get update && apt-get install -y adduser libicu72
+RUN apt-get update && apt-get install -y adduser libicu76
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
