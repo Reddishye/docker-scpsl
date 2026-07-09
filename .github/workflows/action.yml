@@ -6,6 +6,9 @@ on:
       - master
       - slim
       - staging
+    paths:
+      - 'Dockerfile'
+      - 'entrypoint.sh'
 
 env:
   REGISTRY: ghcr.io
