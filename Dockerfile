@@ -3,7 +3,7 @@ LABEL maintainer="EsserGaming"
 USER root
 
 # Grab the essentials
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     adduser \
     libicu76 \
     ca-certificates \
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     adduser \
     libicu76 && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
