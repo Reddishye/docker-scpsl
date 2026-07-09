@@ -3,7 +3,7 @@ LABEL maintainer="Parkeymon, EsserGaming"
 USER root
 
 # Getting the essentials
-#RUN apt-get update && apt-get install -y ffmpeg
+RUN apt-get update && apt-get install -y adduser
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
