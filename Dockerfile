@@ -1,10 +1,17 @@
-FROM debian
-LABEL maintainer="Parkeymon, EsserGaming"
+FROM debian:trixie-slim
+LABEL maintainer="EsserGaming"
 USER root
 
-# Getting the essentials
-RUN apt-get update && apt-get install -y adduser libicu76
-
+# Grab the essentials
+RUN apt-get update && apt-get install -y \
+    adduser \
+    libicu76 \
+    ca-certificates \
+    curl \
+    wget \
+    adduser \
+    libicu76 && \
+    rm -rf /var/lib/apt/lists/*
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
 RUN usermod -a -G container container
