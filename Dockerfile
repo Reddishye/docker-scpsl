@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM debian:trixie-slim
 LABEL maintainer="EsserGaming"
 USER root
@@ -9,10 +10,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     wget \
-    adduser \
-    libicu76 \
     ffmpeg && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+# Build Box64 for ARM64 (Oracle Ampere / Raspberry Pi / etc)
+ARG TARGETARCH
+RUN ARCH=${TARGETARCH:-$(uname -m)} && \
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
+        apt-get update && apt-get install -y --no-install-recommends \
+            git ca-certificates cmake build-essential && \
+        git clone --depth=1 https://github.com/ptitSeb/box64.git /tmp/box64 && \
+        cd /tmp/box64 && mkdir build && cd build && \
+        cmake .. -DARM_DYNAREC=ON -DCMAKE_BUILD_TYPE=Release && \
+        make -j$(nproc) && make install && \
+        rm -rf /tmp/box64 && \
+        apt-get purge -y git cmake build-essential && \
+        apt-get autoremove --purge -y && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
