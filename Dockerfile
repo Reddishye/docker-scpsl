@@ -17,6 +17,7 @@ RUN ARCH=$(uname -m); \
         apt-get install -y --no-install-recommends \
             libc6:amd64 libstdc++6:amd64 libicu67:amd64 \
             libssl1.1:amd64 libssl-dev:amd64 \
+            libssh2-1:amd64 \
             curl:amd64 openssl:amd64; \
         cp /usr/bin/openssl /usr/local/bin/openssl.amd64; \
         cp /usr/bin/curl /usr/local/bin/curl.amd64; \
