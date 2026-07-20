@@ -34,6 +34,10 @@ RUN set -ex; \
         rm -rf /var/lib/apt/lists/*; \
     fi
 
+# Debug crash of SCPSL.x86_64 under box64 — shows segfault addr + last insn
+ENV BOX64_LOG=1
+ENV BOX64_SHOWSEGV=1
+
 # Disable Box64 dynarec Native Flags optimization on ARM64
 # (Neoverse-N1 crash in sysconf with _SC_PAGESIZE: native flags corrupts register)
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
