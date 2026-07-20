@@ -25,10 +25,13 @@ if [ "$ARCH" = "aarch64" ]; then
     echo "=== SSL DIAG END ==="
 fi
 
-# Fix SSL: add --weak-http-security to start.sh if not present (Northwood official fix)
+# Fix SSL: ensure --weak-http-security is AFTER port arg (correct position)
 if [ "$ARCH" = "aarch64" ] && [ -f "start.sh" ]; then
-    sed -i '/--weak-http-security/! s|"./LocalAdmin"|"./LocalAdmin" --weak-http-security|' start.sh 2>/dev/null || true
-    sed -i '/--weak-http-security/! s|box64 "./LocalAdmin"|box64 "./LocalAdmin" --weak-http-security|' start.sh 2>/dev/null || true
+    sed -i "s/^LAUNCH_CMD='\.\/LocalAdmin --weak-http-security'/LAUNCH_CMD='.\/LocalAdmin'/" start.sh
+    sed -i "s/^LAUNCH_CMD='box64 \.\/LocalAdmin --weak-http-security'/LAUNCH_CMD='box64 .\/LocalAdmin'/" start.sh
+    if ! grep -q '\$@ --weak-http-security' start.sh 2>/dev/null; then
+        sed -i 's/\$LAUNCH_CMD "\$@"/$LAUNCH_CMD "$@" --weak-http-security/' start.sh
+    fi
 fi
 
 # Migrate old wrapper scheme: restore real binaries if .bin files exist
