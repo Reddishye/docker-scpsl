@@ -8,10 +8,20 @@ if [ "$ARCH" = "aarch64" ]; then
     echo "=== SSL DIAG (runtime) ==="
     ls -la /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/x86_64-linux-gnu/libcrypto* 2>&1 | head -10
     ls -la /etc/ssl/certs/ca-certificates.crt 2>&1
-    echo "--- openssl s_client ---"
-    echo "Q" | timeout 10 box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -30 || echo "OPENSSL_FAILED=$?"
-    echo "--- curl under box64 ---"
-    timeout 10 box64 /usr/bin/curl -v "https://api.scpslgame.com/" 2>&1 | head -20 || echo "CURL_FAILED=$?"
+    echo "--- native openssl s_client (ARM64) ---"
+    echo "Q" | timeout 10 box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -15 || echo "OPENSSL_NATIVE_FAILED=$?"
+    echo "--- amd64 openssl under box64 ---"
+    if [ -x /usr/local/bin/openssl.amd64 ]; then
+        echo "Q" | timeout 10 box64 /usr/local/bin/openssl.amd64 s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -30 || echo "OPENSSL_AMD64_FAILED=$?"
+    else
+        echo "openssl.amd64 not found - skipping"
+    fi
+    echo "--- amd64 curl under box64 ---"
+    if [ -x /usr/local/bin/curl.amd64 ]; then
+        timeout 10 box64 /usr/local/bin/curl.amd64 -v "https://api.scpslgame.com/" 2>&1 | head -20 || echo "CURL_AMD64_FAILED=$?"
+    else
+        echo "curl.amd64 not found - skipping"
+    fi
     echo "=== SSL DIAG END ==="
 fi
 

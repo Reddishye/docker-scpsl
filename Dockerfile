@@ -25,13 +25,9 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
     if [ "$ARCH" = "aarch64" ]; then \
         apt-get install -y --no-install-recommends \
             curl:amd64 openssl:amd64; \
+        cp /usr/bin/openssl /usr/local/bin/openssl.amd64; \
+        cp /usr/bin/curl /usr/local/bin/curl.amd64; \
         rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
-        echo "=== SSL DIAG ==="; \
-        echo "--- curl:amd64 under box64 ---"; \
-        timeout 15 box64 /usr/bin/curl -v "https://api.scpslgame.com/" 2>&1 | head -40 || echo "CURL_FAILED=$?"; \
-        echo "--- openssl:amd64 s_client under box64 ---"; \
-        echo "Q" | timeout 15 box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -50 || echo "OPENSSL_FAILED=$?"; \
-        echo "=== SSL DIAG END ==="; \
     fi
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
@@ -45,6 +41,8 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 ENV TERM=xterm-256color
 ENV DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=true
 ENV DOTNET_SYSTEM_NET_HTTP_SHOW_DIAGNOSTICS=1
+ENV DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP3_DISABLED=1
+ENV DOTNET_SYSTEM_NET_SECURITY_CHAINREVOCATIONCHECKMODE=NoCheck
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
