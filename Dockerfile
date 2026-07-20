@@ -1,5 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM weilbyte/box:arm64v8-debian-11
+ARG TARGETARCH
+
+FROM debian:bullseye-slim AS base-amd64
+FROM weilbyte/box:arm64v8-debian-11 AS base-arm64
+
+FROM base-${TARGETARCH}
 LABEL maintainer="EsserGaming"
 ENTRYPOINT []
 USER root
@@ -15,12 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENV BOX64_SHOWSEGV=1
-
-# Disable Box64 dynarec Native Flags optimization on ARM64
-# (Neoverse-N1 crash in sysconf with _SC_PAGESIZE: native flags corrupts register)
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
-
-# Required for SCP:SL server - SteamAppId for Steamworks, invariant for .NET ICU
 ENV SteamAppId=996560
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 
