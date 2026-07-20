@@ -16,15 +16,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Box64 for ARM64 via ryanfortner repo (pre-built, ~10s instead of 60min compile)
 # ponytail: pin to specific version if upstream breaking changes happen
 ARG TARGETARCH
-RUN ARCH=${TARGETARCH:-$(uname -m)} && \
+RUN set -ex; \
+    ARCH=${TARGETARCH:-$(uname -m)}; \
     if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
-        apt-get update && apt-get install -y --no-install-recommends gnupg && \
-        wget -qO- https://ryanfortner.github.io/box64-debs/KEY.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/box64-debs-archive-keyring.gpg && \
-        wget https://ryanfortner.github.io/box64-debs/box64.list -O /etc/apt/sources.list.d/box64.list && \
-        apt-get update && apt-get install -y --no-install-recommends box64 && \
-        apt-get purge -y gnupg && \
-        apt-get autoremove --purge -y && \
-        rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/box64.list /etc/apt/trusted.gpg.d/box64-debs-archive-keyring.gpg; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends gnupg ca-certificates; \
+        mkdir -p /etc/apt/keyrings; \
+        wget -qO- https://ryanfortner.github.io/box64-debs/KEY.gpg | gpg --dearmor -o /etc/apt/keyrings/box64-debs-archive-keyring.gpg; \
+        echo "deb [signed-by=/etc/apt/keyrings/box64-debs-archive-keyring.gpg] https://ryanfortner.github.io/box64-debs ./" > /etc/apt/sources.list.d/box64.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends box64; \
+        echo "Box64 installed at: $(which box64)"; \
+        box64 --version; \
+        apt-get purge -y gnupg; \
+        apt-get autoremove --purge -y; \
+        rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/box64.list /etc/apt/keyrings/box64-debs-archive-keyring.gpg; \
     fi
 
 # Disable Box64 dynarec Native Flags optimization on ARM64
