@@ -9,6 +9,11 @@ on:
     paths:
       - 'Dockerfile'
       - 'entrypoint.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 env:
   REGISTRY: ghcr.io
@@ -39,7 +44,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/essergaming/docker-scpsl
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
