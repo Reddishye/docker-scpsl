@@ -14,7 +14,7 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
     ARCH=$(uname -m); \
     if [ "$ARCH" = "aarch64" ]; then \
         apt-get update; \
-        apt-get install -y --no-install-recommends libc6:amd64 libstdc++6:amd64 libicu67:amd64; \
+        apt-get install -y --no-install-recommends libc6:amd64 libstdc++6:amd64 libicu67:amd64 libssl1.1:amd64; \
     fi; \
     apt-get update && apt-get install -y --no-install-recommends \
     adduser \
@@ -26,7 +26,6 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENV BOX64_SHOWSEGV=1
-ENV BOX64_LOG=1
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
 ENV DEBUGGER=/usr/local/bin/box64
 ENV BOX64_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/
