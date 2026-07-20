@@ -14,11 +14,12 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
     ARCH=$(uname -m); \
     if [ "$ARCH" = "aarch64" ]; then \
         apt-get update; \
-        apt-get install -y --no-install-recommends libc6:amd64 libstdc++6:amd64 libicu67:amd64 libssl1.1:amd64 curl:amd64; \
-        echo "=== SSL DIAG: curl to api.scpslgame.com ==="; \
-        curl:amd64 -v --connect-timeout 10 "https://api.scpslgame.com/" 2>&1 | head -40 || true; \
+        apt-get install -y --no-install-recommends libc6:amd64 libstdc++6:amd64 libicu67:amd64 libssl1.1:amd64; \
+        echo "=== SSL DIAG: box64 curl api.scpslgame.com ==="; \
+        apt-get install -y --no-install-recommends --fix-missing curl:amd64 2>&1; \
+        box64 /usr/bin/curl -v --connect-timeout 10 "https://api.scpslgame.com/" 2>&1 | head -50 || echo "CURL_DIAG_FAILED"; \
         echo "=== SSL DIAG END ==="; \
-        apt-get purge -y curl:amd64; \
+        apt-get purge -y curl:amd64 2>/dev/null || true; \
     fi; \
     apt-get update && apt-get install -y --no-install-recommends \
     adduser \
