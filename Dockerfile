@@ -22,8 +22,8 @@ RUN set -ex; \
         apt-get update; \
         apt-get install -y --no-install-recommends gnupg ca-certificates; \
         mkdir -p /etc/apt/keyrings; \
-        wget -qO- https://ryanfortner.github.io/box64-debs/KEY.gpg | gpg --dearmor -o /etc/apt/keyrings/box64-debs-archive-keyring.gpg; \
-        echo "deb [signed-by=/etc/apt/keyrings/box64-debs-archive-keyring.gpg] https://ryanfortner.github.io/box64-debs ./" > /etc/apt/sources.list.d/box64.list; \
+        wget -qO- https://raw.githubusercontent.com/ryanfortner/box64-debs/master/KEY.gpg | gpg --dearmor -o /etc/apt/keyrings/box64-debs-archive-keyring.gpg; \
+        echo "deb [signed-by=/etc/apt/keyrings/box64-debs-archive-keyring.gpg] https://raw.githubusercontent.com/ryanfortner/box64-debs/master/debian ./" > /etc/apt/sources.list.d/box64.list; \
         apt-get update; \
         apt-get install -y --no-install-recommends box64; \
         echo "Box64 installed at: $(which box64)"; \
