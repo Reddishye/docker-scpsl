@@ -26,8 +26,6 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
         apt-get install -y --no-install-recommends \
             curl:amd64 openssl:amd64; \
         rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
-        ln -sf /usr/lib/x86_64-linux-gnu/libssl.so.1.1 /usr/lib/x86_64-linux-gnu/libssl.so.3; \
-        ln -sf /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1 /usr/lib/x86_64-linux-gnu/libcrypto.so.3; \
         echo "=== SSL DIAG ==="; \
         echo "--- curl:amd64 under box64 ---"; \
         timeout 15 box64 /usr/bin/curl -v "https://api.scpslgame.com/" 2>&1 | head -40 || echo "CURL_FAILED=$?"; \
@@ -37,6 +35,7 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
     fi
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV DOTNET_OPENSSL_VERSION_OVERRIDE=1.1
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
 ENV BOX64_DYNAREC_STRONGMEM=1
 ENV DEBUGGER=/usr/local/bin/box64
