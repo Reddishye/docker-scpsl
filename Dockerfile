@@ -9,8 +9,14 @@ LABEL maintainer="EsserGaming"
 ENTRYPOINT []
 USER root
 
-# Grab the essentials
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install essential packages + x86_64 multiarch libraries for box64 emulation
+RUN dpkg --add-architecture amd64 2>/dev/null; \
+    ARCH=$(uname -m); \
+    if [ "$ARCH" = "aarch64" ]; then \
+        apt-get update; \
+        apt-get install -y --no-install-recommends libc6:amd64 libstdc++6:amd64 libicu67:amd64; \
+    fi; \
+    apt-get update && apt-get install -y --no-install-recommends \
     adduser \
     libicu67 \
     ca-certificates \
