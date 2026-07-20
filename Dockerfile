@@ -10,25 +10,23 @@ ENTRYPOINT []
 USER root
 
 # Install packages + x86_64 multiarch libraries for box64 (ARM64 only)
-RUN dpkg --add-architecture amd64 2>/dev/null; \
-    ARCH=$(uname -m); \
+RUN ARCH=$(uname -m); \
+    dpkg --add-architecture amd64 2>/dev/null; \
+    apt-get update; \
     if [ "$ARCH" = "aarch64" ]; then \
-        apt-get update; \
         apt-get install -y --no-install-recommends \
             libc6:amd64 libstdc++6:amd64 libicu67:amd64 \
-            libssl1.1:amd64 libssl-dev:amd64 ca-certificates; \
-        update-ca-certificates --fresh; \
-    fi; \
-    apt-get update && apt-get install -y --no-install-recommends \
-    adduser libicu67 ca-certificates curl wget ffmpeg && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
-    if [ "$ARCH" = "aarch64" ]; then \
-        apt-get install -y --no-install-recommends \
+            libssl1.1:amd64 libssl-dev:amd64 \
             curl:amd64 openssl:amd64; \
         cp /usr/bin/openssl /usr/local/bin/openssl.amd64; \
         cp /usr/bin/curl /usr/local/bin/curl.amd64; \
-        rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
-    fi
+    fi; \
+    apt-get install -y --no-install-recommends \
+        adduser libicu67 ca-certificates curl wget ffmpeg && \
+    if [ "$ARCH" = "aarch64" ]; then \
+        update-ca-certificates --fresh; \
+    fi; \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV DOTNET_OPENSSL_VERSION_OVERRIDE=1.1

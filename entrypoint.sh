@@ -25,6 +25,12 @@ if [ "$ARCH" = "aarch64" ]; then
     echo "=== SSL DIAG END ==="
 fi
 
+# Fix SSL: add --weak-http-security to start.sh if not present (Northwood official fix)
+if [ "$ARCH" = "aarch64" ] && [ -f "start.sh" ]; then
+    sed -i '/--weak-http-security/! s|"./LocalAdmin"|"./LocalAdmin" --weak-http-security|' start.sh 2>/dev/null || true
+    sed -i '/--weak-http-security/! s|box64 "./LocalAdmin"|box64 "./LocalAdmin" --weak-http-security|' start.sh 2>/dev/null || true
+fi
+
 # Migrate old wrapper scheme: restore real binaries if .bin files exist
 for bin in LocalAdmin SCPSL.x86_64; do
     if [ -f "${bin}.bin" ] && [ -f "$bin" ] && head -1 "$bin" | grep -q "^#!/bin/bash"; then
