@@ -13,20 +13,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
-# Build Box64 for ARM64 (Oracle Ampere / Raspberry Pi / etc)
+# Install Box64 for ARM64 via ryanfortner repo (pre-built, ~10s instead of 60min compile)
+# ponytail: pin to specific version if upstream breaking changes happen
 ARG TARGETARCH
 RUN ARCH=${TARGETARCH:-$(uname -m)} && \
     if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
-        apt-get update && apt-get install -y --no-install-recommends \
-            git ca-certificates cmake build-essential python3 && \
-        git clone --depth=1 https://github.com/ptitSeb/box64.git /tmp/box64 && \
-        cd /tmp/box64 && mkdir build && cd build && \
-        cmake .. -DARM_DYNAREC=ON -DCMAKE_BUILD_TYPE=Release && \
-        make -j$(nproc) && make install && \
-        rm -rf /tmp/box64 && \
-        apt-get purge -y git ca-certificates cmake build-essential python3 && \
+        apt-get update && apt-get install -y --no-install-recommends gnupg && \
+        wget -qO- https://ryanfortner.github.io/box64-debs/KEY.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/box64-debs-archive-keyring.gpg && \
+        wget https://ryanfortner.github.io/box64-debs/box64.list -O /etc/apt/sources.list.d/box64.list && \
+        apt-get update && apt-get install -y --no-install-recommends box64 && \
+        apt-get purge -y gnupg && \
         apt-get autoremove --purge -y && \
-        rm -rf /var/lib/apt/lists/*; \
+        rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/box64.list /etc/apt/trusted.gpg.d/box64-debs-archive-keyring.gpg; \
     fi
 
 # Container setup for Pterodactyl
