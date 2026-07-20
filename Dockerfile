@@ -27,6 +27,10 @@ RUN ARCH=${TARGETARCH:-$(uname -m)} && \
         rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/box64.list /etc/apt/trusted.gpg.d/box64-debs-archive-keyring.gpg; \
     fi
 
+# Disable Box64 dynarec Native Flags optimization on ARM64
+# (Neoverse-N1 crash in sysconf with _SC_PAGESIZE: native flags corrupts register)
+ENV BOX64_DYNAREC_NATIVEFLAGS=0
+
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
 ARG CACHBUST=1
