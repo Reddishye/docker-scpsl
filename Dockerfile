@@ -38,6 +38,10 @@ RUN set -ex; \
 # (Neoverse-N1 crash in sysconf with _SC_PAGESIZE: native flags corrupts register)
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
 
+# Required for SCP:SL server - SteamAppId for Steamworks, invariant for .NET ICU
+ENV SteamAppId=996560
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
 ARG CACHBUST=1
