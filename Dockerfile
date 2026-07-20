@@ -31,6 +31,8 @@ ENV DEBUGGER=/usr/local/bin/box64
 ENV BOX64_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/
 ENV SteamAppId=996560
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+ENV TERM=xterm-256color
+ENV DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=true
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
