@@ -9,23 +9,24 @@ LABEL maintainer="EsserGaming"
 ENTRYPOINT []
 USER root
 
-# Install essential packages + x86_64 multiarch libraries for box64 emulation
+# Install Arm64 native packages + optional x86_64 multiarch for box64
 RUN dpkg --add-architecture amd64 2>/dev/null; \
     ARCH=$(uname -m); \
     if [ "$ARCH" = "aarch64" ]; then \
         apt-get update; \
         apt-get install -y --no-install-recommends \
             libc6:amd64 libstdc++6:amd64 libicu67:amd64 \
-            libssl1.1:amd64 libssl-dev:amd64; \
+            libssl1.1:amd64 libssl-dev:amd64 \
+            ca-certificates; \
         update-ca-certificates --fresh; \
-        echo "=== SSL DIAG: box64 curl + openssl s_client ==="; \
-        apt-get install -y --no-install-recommends --fix-missing curl:amd64 openssl:amd64 2>&1; \
+        apt-get install -y --no-install-recommends \
+            curl:amd64 openssl:amd64; \
+        echo "=== SSL DIAG ==="; \
         echo "--- curl ---"; \
-        box64 /usr/bin/curl -v --connect-timeout 15 "https://api.scpslgame.com/" 2>&1 | head -40 || echo "CURL_FAILED"; \
+        timeout 15 box64 /usr/bin/curl -v "https://api.scpslgame.com/" 2>&1 | head -40 || echo "CURL_FAILED=$?"; \
         echo "--- openssl s_client ---"; \
-        echo "Q" | box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -40 || echo "OPENSSL_FAILED"; \
+        echo "Q" | timeout 15 box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -50 || echo "OPENSSL_FAILED=$?"; \
         echo "=== SSL DIAG END ==="; \
-        apt-get purge -y curl:amd64 openssl:amd64 2>/dev/null || true; \
     fi; \
     apt-get update && apt-get install -y --no-install-recommends \
     adduser \

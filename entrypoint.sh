@@ -3,11 +3,15 @@ cd /home/container
 
 ARCH=$(uname -m)
 
-# SSL Diag: check lib availability at runtime
+# SSL Diag: check lib + connectivity at runtime
 if [ "$ARCH" = "aarch64" ]; then
-    echo "=== SSL DIAG ==="
+    echo "=== SSL DIAG (runtime) ==="
     ls -la /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/x86_64-linux-gnu/libcrypto* 2>&1 | head -10
     ls -la /etc/ssl/certs/ca-certificates.crt 2>&1
+    echo "--- curl ---"
+    timeout 10 box64 /usr/bin/curl -v "https://api.scpslgame.com/" 2>&1 | head -20 || echo "CURL_FAILED=$?"
+    echo "--- openssl s_client ---"
+    echo "Q" | timeout 10 box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -30 || echo "OPENSSL_FAILED=$?"
     echo "=== SSL DIAG END ==="
 fi
 
