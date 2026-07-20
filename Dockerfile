@@ -26,7 +26,10 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENV BOX64_SHOWSEGV=1
+ENV BOX64_LOG=1
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
+ENV DEBUGGER=/usr/local/bin/box64
+ENV BOX64_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/
 ENV SteamAppId=996560
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 
