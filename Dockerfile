@@ -39,12 +39,15 @@ RUN dpkg --add-architecture amd64 2>/dev/null; \
 ENV BOX64_SHOWSEGV=1
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
+ENV BOX64_DYNAREC_STRONGMEM=1
+ENV BOX64_DLSYM_ERROR=1
 ENV DEBUGGER=/usr/local/bin/box64
 ENV BOX64_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/
 ENV SteamAppId=996560
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 ENV TERM=xterm-256color
 ENV DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=true
+ENV DOTNET_SYSTEM_NET_HTTP_SHOW_DIAGNOSTICS=1
 
 # Container setup for Pterodactyl
 RUN adduser --home /home/container container --disabled-password
