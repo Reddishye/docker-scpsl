@@ -18,13 +18,13 @@ ARG TARGETARCH
 RUN ARCH=${TARGETARCH:-$(uname -m)} && \
     if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
         apt-get update && apt-get install -y --no-install-recommends \
-            git ca-certificates cmake build-essential && \
+            git ca-certificates cmake build-essential python3 && \
         git clone --depth=1 https://github.com/ptitSeb/box64.git /tmp/box64 && \
         cd /tmp/box64 && mkdir build && cd build && \
         cmake .. -DARM_DYNAREC=ON -DCMAKE_BUILD_TYPE=Release && \
         make -j$(nproc) && make install && \
         rm -rf /tmp/box64 && \
-        apt-get purge -y git cmake build-essential && \
+        apt-get purge -y git ca-certificates cmake build-essential python3 && \
         apt-get autoremove --purge -y && \
         rm -rf /var/lib/apt/lists/*; \
     fi
