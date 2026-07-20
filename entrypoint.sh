@@ -3,10 +3,11 @@ cd /home/container
 
 ARCH=$(uname -m)
 
-# SSL Diag: test if OpenSSL works under box64 at runtime
+# SSL Diag: check lib availability at runtime
 if [ "$ARCH" = "aarch64" ]; then
     echo "=== SSL DIAG ==="
     ls -la /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/x86_64-linux-gnu/libcrypto* 2>&1 | head -10
+    ls -la /etc/ssl/certs/ca-certificates.crt 2>&1
     echo "=== SSL DIAG END ==="
 fi
 
@@ -25,9 +26,11 @@ if [ "$ARCH" = "aarch64" ] && [ -f "start.sh" ] && grep -q '^"./LocalAdmin"' sta
     echo "Fixed start.sh: added box64 prefix for ARM64"
 fi
 
-# Prep x86_64 library path for box64 on ARM64
+# Box64 env config (mirrors reference init.sh pattern)
 if [ "$ARCH" = "aarch64" ]; then
-    export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export templdpath="${LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu"
+    export DEBUGGER="/usr/local/bin/box64"
 fi
 
 MODIFIED_STARTUP="eval $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')"
