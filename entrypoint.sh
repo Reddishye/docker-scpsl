@@ -7,8 +7,8 @@ ARCH=$(uname -m)
 cR=$'\033[0;31m'; cG=$'\033[0;32m'; cY=$'\033[0;33m'; cB=$'\033[0;34m'; cC=$'\033[0;36m'; cN=$'\033[0m'
 cecho() { printf '%s%s%s\n' "$1" "$2" "${cN}"; }
 if [ "$ARCH" = "aarch64" ]; then
-    cecho "$cG" "=== SCP:SL ARM64 Container ==="
-    cecho "$cC" "Arch: $ARCH"
+    printf '\033[0;32m=== SCP:SL ARM64 Container ===\033[0m\n'
+    printf '\033[0;36mArch: %s\033[0m\n' "$ARCH"
 fi
 
 # Priority PATH: prefer /usr/bin box64 (updated via Pi-Apps-Coders deb)
@@ -63,7 +63,7 @@ fi
 if [ "$ARCH" = "aarch64" ] && [ -f "start.sh" ]; then
     if grep -q 'printf.*|.*\$LAUNCH_CMD' start.sh 2>/dev/null; then
         sed -i '/^[[:space:]]*printf/s/^[[:space:]]*printf[^|]*|[[:space:]]*//' start.sh
-        echo "Fixed start.sh: removed stdin pipe for console commands"
+        true  # stdin pipe removed (allows console commands)
     fi
 fi
 
@@ -117,7 +117,6 @@ if [ "$AUTO_UPDATE" = "true" ] && [ "$ARCH" = "aarch64" ]; then
 fi
 
 MODIFIED_STARTUP="eval $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')"
-cecho "$cB" ":/home/container$ ${MODIFIED_STARTUP}"
 
 # Crash handler: configurable retries (0 = unlimited)
 if [ "$ARCH" = "aarch64" ]; then
