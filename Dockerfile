@@ -26,20 +26,18 @@ RUN ARCH=$(uname -m); \
         adduser libicu67 ca-certificates curl wget ffmpeg && \
     if [ "$ARCH" = "aarch64" ]; then \
         update-ca-certificates --fresh; \
-        # Download real libssl3:amd64 for Unity IL2CPP (needs libssl.so.3 soname)
-        wget -q -O /tmp/libssl3_amd64.deb \
+        wget -q -O /tmp/libssl3.deb \
             "https://deb.debian.org/debian/pool/main/o/openssl/libssl3_3.0.20-1~deb12u2_amd64.deb" && \
-        mkdir -p /tmp/libssl3_extract && \
-        dpkg-deb -x /tmp/libssl3_amd64.deb /tmp/libssl3_extract && \
-        cp -v /tmp/libssl3_extract/usr/lib/x86_64-linux-gnu/libssl.so.3 \
-              /tmp/libssl3_extract/usr/lib/x86_64-linux-gnu/libcrypto.so.3 \
-              /usr/lib/x86_64-linux-gnu/ && \
-        rm -rf /tmp/libssl3_amd64.deb /tmp/libssl3_extract; \
+        mkdir -p /tmp/ssl3 && dpkg-deb -x /tmp/libssl3.deb /tmp/ssl3 && \
+        cp /tmp/ssl3/usr/lib/x86_64-linux-gnu/libssl.so.3 \
+           /tmp/ssl3/usr/lib/x86_64-linux-gnu/libcrypto.so.3 \
+           /usr/lib/x86_64-linux-gnu/ && \
+        rm -rf /tmp/libssl3.deb /tmp/ssl3; \
     fi; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV DOTNET_OPENSSL_VERSION_OVERRIDE=1.1
+
 ENV BOX64_DYNAREC_NATIVEFLAGS=0
 ENV BOX64_DYNAREC_STRONGMEM=1
 ENV DEBUGGER=/usr/local/bin/box64
