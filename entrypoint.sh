@@ -3,11 +3,12 @@ cd /home/container
 
 ARCH=$(uname -m)
 
-# Colors
+# Colors (ANSI via printf for portability)
+cR='\033[0;31m'; cG='\033[0;32m'; cY='\033[0;33m'; cB='\033[0;34m'; cC='\033[0;36m'; cN='\033[0m'
+cecho() { printf '%b%s%b\n' "$1" "$2" "${cN}"; }
 if [ "$ARCH" = "aarch64" ]; then
-    R='\033[0;31m'; G='\033[0;32m'; Y='\033[0;33m'; B='\033[0;34m'; C='\033[0;36m'; N='\033[0m'
-    echo -e "${G}=== SCP:SL ARM64 Container ===${N}"
-    echo -e "${C}Arch: $ARCH${N}"
+    cecho "$cG" "=== SCP:SL ARM64 Container ==="
+    cecho "$cC" "Arch: $ARCH"
 fi
 
 # Priority PATH: prefer /usr/bin box64 (updated via Pi-Apps-Coders deb)
@@ -17,7 +18,7 @@ fi
 
 # DEBUG mode - verbose diagnostics only when enabled
 if [ "$DEBUG" = "true" ] && [ "$ARCH" = "aarch64" ]; then
-    echo -e "${Y}=== SSL DIAG (runtime) ===${N}"
+    cecho "$cY" "=== SSL DIAG (runtime) ==="
     ls -la /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/x86_64-linux-gnu/libcrypto* 2>&1 | head -10
     echo "--- native openssl s_client (ARM64) ---"
     echo "Q" | timeout 10 openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -15 || echo "OPENSSL_NATIVE_FAILED=$?"
@@ -29,7 +30,7 @@ if [ "$DEBUG" = "true" ] && [ "$ARCH" = "aarch64" ]; then
     if [ -x /usr/local/bin/curl.amd64 ]; then
         timeout 10 box64 /usr/local/bin/curl.amd64 -v "https://api.scpslgame.com/" 2>&1 | head -20 || echo "CURL_AMD64_FAILED=$?"
     fi
-    echo -e "${Y}=== SSL DIAG END ===${N}"
+    cecho "$cY" "=== SSL DIAG END ==="
 fi
 
 # OpenSSL SECLEVEL=0 via config file (no root needed)
@@ -100,15 +101,15 @@ fi
 if [ "$AUTO_UPDATE" = "true" ] && [ "$ARCH" = "aarch64" ]; then
     DD=".DepotDownloader/DepotDownloader"
     if [ -f "$DD" ]; then
-        echo -e "${C}Checking for SCP:SL updates...${N}"
-        timeout 120 box64 "$DD" -app 996560 -depot 996562 -dir /home/container -validate 2>&1 | tail -5 || echo -e "${Y}Update check skipped${N}"
+        cecho "$cC" "Checking for SCP:SL updates..."
+        timeout 120 box64 "$DD" -app 996560 -depot 996562 -dir /home/container -validate 2>&1 | tail -5 || cecho "$cY" "Update check skipped"
     else
-        echo -e "${Y}DepotDownloader not found, skipping auto-update${N}"
+        cecho "$cY" "DepotDownloader not found, skipping auto-update"
     fi
 fi
 
 MODIFIED_STARTUP="eval $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')"
-echo -e "${B}:/home/container$ ${MODIFIED_STARTUP}${N}"
+cecho "$cB" ":/home/container$ ${MODIFIED_STARTUP}"
 
 # Crash handler: configurable retries (0 = unlimited)
 if [ "$ARCH" = "aarch64" ]; then
@@ -127,7 +128,7 @@ if [ "$ARCH" = "aarch64" ]; then
 
         # Unlimited mode: always restart
         if [ "$MAX_RETRIES" -eq 0 ]; then
-            echo -e "${Y}[$(date +%H:%M:%S)] Server exited ($RC), restarting in ${RETRY_DELAY}s...${N}"
+            cecho "$cY" "[$(date +%H:%M:%S)] Server exited ($RC), restarting in ${RETRY_DELAY}s..."
             sleep "$RETRY_DELAY"
             continue
         fi
@@ -135,10 +136,10 @@ if [ "$ARCH" = "aarch64" ]; then
         # Limited retries
         RETRY_COUNT=$((RETRY_COUNT + 1))
         if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
-            echo -e "${R}Server failed after $MAX_RETRIES attempts, last RC: $RC${N}"
+            cecho "$cR" "Server failed after $MAX_RETRIES attempts, last RC: $RC"
             exit $RC
         fi
-        echo -e "${Y}[$(date +%H:%M:%S)] Server exited ($RC), retry $RETRY_COUNT/$MAX_RETRIES in ${RETRY_DELAY}s...${N}"
+        cecho "$cY" "[$(date +%H:%M:%S)] Server exited ($RC), retry $RETRY_COUNT/$MAX_RETRIES in ${RETRY_DELAY}s..."
         sleep "$RETRY_DELAY"
     done
 else
