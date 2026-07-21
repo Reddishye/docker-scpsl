@@ -59,6 +59,14 @@ if [ "$ARCH" = "aarch64" ] && [ -f "start.sh" ]; then
     fi
 fi
 
+# Fix stdin: remove printf pipe that steals console input
+if [ "$ARCH" = "aarch64" ] && [ -f "start.sh" ]; then
+    if grep -q 'printf.*|.*\$LAUNCH_CMD' start.sh 2>/dev/null; then
+        sed -i '/^[[:space:]]*printf/s/^[[:space:]]*printf[^|]*|[[:space:]]*//' start.sh
+        echo "Fixed start.sh: removed stdin pipe for console commands"
+    fi
+fi
+
 # Restore real binaries if .bin files exist
 for bin in LocalAdmin SCPSL.x86_64; do
     if [ -f "${bin}.bin" ] && [ -f "$bin" ] && head -1 "$bin" | grep -q "^#!/bin/bash"; then
