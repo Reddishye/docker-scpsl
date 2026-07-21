@@ -3,9 +3,9 @@ cd /home/container
 
 ARCH=$(uname -m)
 
-# Colors (ANSI via printf for portability)
-cR='\033[0;31m'; cG='\033[0;32m'; cY='\033[0;33m'; cB='\033[0;34m'; cC='\033[0;36m'; cN='\033[0m'
-cecho() { printf '%b%s%b\n' "$1" "$2" "${cN}"; }
+# Colors (ANSI via embedded ESC chars for portability)
+cR=$'\033[0;31m'; cG=$'\033[0;32m'; cY=$'\033[0;33m'; cB=$'\033[0;34m'; cC=$'\033[0;36m'; cN=$'\033[0m'
+cecho() { printf '%s%s%s\n' "$1" "$2" "${cN}"; }
 if [ "$ARCH" = "aarch64" ]; then
     cecho "$cG" "=== SCP:SL ARM64 Container ==="
     cecho "$cC" "Arch: $ARCH"
