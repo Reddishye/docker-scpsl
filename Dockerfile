@@ -23,7 +23,8 @@ RUN ARCH=$(uname -m); \
         cp /usr/bin/curl /usr/local/bin/curl.amd64; \
     fi; \
     apt-get install -y --no-install-recommends \
-        adduser libicu67 ca-certificates curl wget ffmpeg && \
+        adduser libicu67 ca-certificates curl wget ffmpeg \
+        openssl socat && \
     if [ "$ARCH" = "aarch64" ]; then \
         update-ca-certificates --fresh; \
         wget -q -O /tmp/libssl3.deb \
@@ -33,6 +34,11 @@ RUN ARCH=$(uname -m); \
            /tmp/ssl3/usr/lib/x86_64-linux-gnu/libcrypto.so.3 \
            /usr/lib/x86_64-linux-gnu/ && \
         rm -rf /tmp/libssl3.deb /tmp/ssl3; \
+        wget -q -O /tmp/isrg-root-x1.crt https://letsencrypt.org/certs/isrgrootx1.pem; \
+        cp /tmp/isrg-root-x1.crt /usr/local/share/ca-certificates/isrg-root-x1.crt; \
+        update-ca-certificates --fresh; \
+        rm -f /tmp/isrg-root-x1.crt; \
+        openssl rehash /etc/ssl/certs/ 2>/dev/null; \
     fi; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 

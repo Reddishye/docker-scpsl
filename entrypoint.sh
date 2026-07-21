@@ -3,13 +3,13 @@ cd /home/container
 
 ARCH=$(uname -m)
 
-# SSL Diag: check x86_64 libs + SSL connectivity under box64
+# SSL DIAG: check x86_64 libs + SSL connectivity under box64
 if [ "$ARCH" = "aarch64" ]; then
     echo "=== SSL DIAG (runtime) ==="
     ls -la /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/x86_64-linux-gnu/libcrypto* 2>&1 | head -10
     ls -la /etc/ssl/certs/ca-certificates.crt 2>&1
     echo "--- native openssl s_client (ARM64) ---"
-    echo "Q" | timeout 10 box64 /usr/bin/openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -15 || echo "OPENSSL_NATIVE_FAILED=$?"
+    echo "Q" | timeout 10 openssl s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -15 || echo "OPENSSL_NATIVE_FAILED=$?"
     echo "--- amd64 openssl under box64 ---"
     if [ -x /usr/local/bin/openssl.amd64 ]; then
         echo "Q" | timeout 10 box64 /usr/local/bin/openssl.amd64 s_client -connect api.scpslgame.com:443 -CAfile /etc/ssl/certs/ca-certificates.crt 2>&1 | head -30 || echo "OPENSSL_AMD64_FAILED=$?"
@@ -56,7 +56,49 @@ if [ "$ARCH" = "aarch64" ]; then
     export DEBUGGER="/usr/local/bin/box64"
 fi
 
+# SSL cert sync: ensure ISRG Root X1 cert is present for .NET/OpenSSL
+if [ "$ARCH" = "aarch64" ]; then
+    if [ ! -f /etc/ssl/certs/ISRG_Root_X1.pem ] && [ ! -f /etc/ssl/certs/isrgrootx1.pem ]; then
+        echo "=== SSL: ISRG Root X1 cert missing, attempting download ==="
+        wget -q -O /tmp/isrg-root-x1.crt https://letsencrypt.org/certs/isrgrootx1.pem 2>/dev/null && \
+        cp /tmp/isrg-root-x1.crt /usr/local/share/ca-certificates/isrg-root-x1.crt && \
+        update-ca-certificates --fresh 2>/dev/null && \
+        echo "=== SSL: ISRG Root X1 installed ===" || \
+        echo "=== SSL: ISRG Root X1 download failed (will retry at next boot) ==="
+        rm -f /tmp/isrg-root-x1.crt
+    else
+        echo "=== SSL: ISRG Root X1 already present ==="
+    fi
+fi
+
+# Box64 warmup: run a trivial x86_64 binary to prime dynarec cache
+if [ "$ARCH" = "aarch64" ]; then
+    if command -v box64 >/dev/null 2>&1; then
+        timeout 5 box64 /usr/bin/true 2>/dev/null || true
+        echo "=== Box64 warmup done ==="
+    fi
+fi
+
 MODIFIED_STARTUP="eval $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')"
 echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-${MODIFIED_STARTUP}
+# Retry loop for ARM64: first boot may crash (exit 134) due to box64 cold cache
+if [ "$ARCH" = "aarch64" ]; then
+    MAX_RETRIES=3
+    for i in $(seq 1 $MAX_RETRIES); do
+        ${MODIFIED_STARTUP}
+        RC=$?
+        if [ $RC -eq 0 ]; then
+            exit 0
+        fi
+        if [ $i -lt $MAX_RETRIES ]; then
+            echo "Server exited with code $RC, retry $i/$MAX_RETRIES in 5s..."
+            sleep 5
+        else
+            echo "All $MAX_RETRIES attempts failed, last exit code: $RC"
+            exit $RC
+        fi
+    done
+else
+    ${MODIFIED_STARTUP}
+fi
