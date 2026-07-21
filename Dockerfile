@@ -43,10 +43,7 @@ RUN ARCH=$(uname -m); \
         mkdir -p /usr/share/keyrings && \
         wget -qO- "https://pi-apps-coders.github.io/box64-debs/KEY.gpg" | \
             gpg --dearmor -o /usr/share/keyrings/box64-archive-keyring.gpg && \
-        echo "Types: deb
-URIs: https://Pi-Apps-Coders.github.io/box64-debs/debian
-Suites: ./
-Signed-By: /usr/share/keyrings/box64-archive-keyring.gpg" \
+        printf 'Types: deb\nURIs: https://Pi-Apps-Coders.github.io/box64-debs/debian\nSuites: ./\nSigned-By: /usr/share/keyrings/box64-archive-keyring.gpg\n' \
             > /etc/apt/sources.list.d/box64.sources && \
         apt-get update && \
         apt-get install -y box64-generic-arm; \
