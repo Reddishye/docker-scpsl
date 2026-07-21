@@ -24,7 +24,7 @@ RUN ARCH=$(uname -m); \
     fi; \
     apt-get install -y --no-install-recommends \
         adduser libicu67 ca-certificates curl wget ffmpeg \
-        openssl socat && \
+        openssl socat gnupg && \
     if [ "$ARCH" = "aarch64" ]; then \
         update-ca-certificates --fresh; \
         wget -q -O /tmp/libssl3.deb \
@@ -39,6 +39,17 @@ RUN ARCH=$(uname -m); \
         update-ca-certificates --fresh; \
         rm -f /tmp/isrg-root-x1.crt; \
         openssl rehash /etc/ssl/certs/ 2>/dev/null; \
+        # Install latest box64 from Pi-Apps-Coders repo (daily CI builds)
+        mkdir -p /usr/share/keyrings && \
+        wget -qO- "https://pi-apps-coders.github.io/box64-debs/KEY.gpg" | \
+            gpg --dearmor -o /usr/share/keyrings/box64-archive-keyring.gpg && \
+        echo "Types: deb
+URIs: https://Pi-Apps-Coders.github.io/box64-debs/debian
+Suites: ./
+Signed-By: /usr/share/keyrings/box64-archive-keyring.gpg" \
+            > /etc/apt/sources.list.d/box64.sources && \
+        apt-get update && \
+        apt-get install -y box64-generic-arm; \
     fi; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
@@ -50,12 +61,12 @@ ENV DEBUGGER=/usr/local/bin/box64
 ENV BOX64_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/
 ENV SteamAppId=996560
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+# .NET config: PascalCase mapping (dot -> _), all lowercase for the rest
+ENV DOTNET_System_Net_Http_SocketsHttpHandler_Http2UnsupportedEnabled=true
+ENV DOTNET_System_Net_Http_SocketsHttpHandler_Http3Disabled=true
+ENV DOTNET_System_Net_Http_ShowDiagnostics=false
+ENV DOTNET_System_Net_Security_ChainRevocationCheckMode=NoCheck
 ENV TERM=xterm-256color
-ENV DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=true
-ENV DOTNET_SYSTEM_NET_HTTP_SHOW_DIAGNOSTICS=1
-ENV DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP3_DISABLED=1
-ENV DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2UNSUPPORTED_ENABLED=1
-ENV DOTNET_SYSTEM_NET_SECURITY_CHAINREVOCATIONCHECKMODE=NoCheck
 ENV ACCEPT_SCPSL_EULA=TRUE
 
 # Container setup for Pterodactyl

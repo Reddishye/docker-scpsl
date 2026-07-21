@@ -3,6 +3,12 @@ cd /home/container
 
 ARCH=$(uname -m)
 
+# Priority PATH: prefer /usr/bin box64 (updated via Pi-Apps-Coders deb)
+# over host-mounted stale box64 at /usr/local/bin (Pterodactyl mount)
+if [ "$ARCH" = "aarch64" ]; then
+    export PATH="/usr/bin:$PATH"
+fi
+
 # SSL DIAG: check x86_64 libs + SSL connectivity under box64
 if [ "$ARCH" = "aarch64" ]; then
     echo "=== SSL DIAG (runtime) ==="
@@ -23,6 +29,29 @@ if [ "$ARCH" = "aarch64" ]; then
         echo "curl.amd64 not found - skipping"
     fi
     echo "=== SSL DIAG END ==="
+fi
+
+# OpenSSL SECLEVEL=0: .NET under box64 may fail with SECLEVEL=1 cipher restrictions
+if [ "$ARCH" = "aarch64" ]; then
+    if [ ! -f /etc/ssl/openssl.cnf.ori ]; then
+        cp /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf.ori 2>/dev/null
+        cat >> /etc/ssl/openssl.cnf << 'EOF'
+
+# SECLEVEL=0 for .NET SSL compat under box64 (added by entrypoint.sh)
+openssl_conf = openssl_init
+
+[openssl_init]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+MinProtocol = TLSv1.2
+CipherString = DEFAULT@SECLEVEL=0
+EOF
+        echo "OpenSSL SECLEVEL=0 configured"
+    fi
 fi
 
 # Fix SSL: ensure --weak-http-security is AFTER port arg (correct position)
@@ -54,7 +83,6 @@ if [ "$ARCH" = "aarch64" ]; then
     export templdpath="${LD_LIBRARY_PATH}"
     export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu"
     export DEBUGGER="/usr/local/bin/box64"
-    export DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2UNSUPPORTED_ENABLED=1
     export SSL_CERT_DIR=/etc/ssl/certs
 fi
 
@@ -73,10 +101,17 @@ if [ "$ARCH" = "aarch64" ]; then
     fi
 fi
 
-# Box64 warmup: run a trivial x86_64 binary to prime dynarec cache
+# Box64 warmup: run box64 with real x86_64 binary to prime dynarec cache
+# Using ld-linux (x86_64 dynamic linker) - box64 will set up JIT/dynarec
 if [ "$ARCH" = "aarch64" ]; then
     if command -v box64 >/dev/null 2>&1; then
-        timeout 5 box64 /usr/bin/true 2>/dev/null || true
+        if [ -x /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ]; then
+            timeout 5 box64 /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 2>/dev/null || true
+        fi
+        # Also warm with openssl binary for SSL-related codegen
+        if [ -x /usr/local/bin/openssl.amd64 ]; then
+            timeout 5 box64 /usr/local/bin/openssl.amd64 version 2>/dev/null || true
+        fi
         echo "=== Box64 warmup done ==="
     fi
 fi
