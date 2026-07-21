@@ -54,6 +54,8 @@ if [ "$ARCH" = "aarch64" ]; then
     export templdpath="${LD_LIBRARY_PATH}"
     export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu"
     export DEBUGGER="/usr/local/bin/box64"
+    export DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2UNSUPPORTED_ENABLED=1
+    export SSL_CERT_DIR=/etc/ssl/certs
 fi
 
 # SSL cert sync: ensure ISRG Root X1 cert is present for .NET/OpenSSL
