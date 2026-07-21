@@ -26,6 +26,12 @@ RUN ARCH=$(uname -m); \
         adduser libicu67 ca-certificates curl wget ffmpeg && \
     if [ "$ARCH" = "aarch64" ]; then \
         update-ca-certificates --fresh; \
+        # Create symlinks for libssl.so.3 -> libssl.so.1.1 (Unity IL2CPP compatibility)
+        mkdir -p /usr/lib/x86_64-linux-gnu/; \
+        if [ -f /usr/lib/x86_64-linux-gnu/libssl.so.1.1 ]; then \
+            ln -sf libssl.so.1.1 /usr/lib/x86_64-linux-gnu/libssl.so.3; \
+            ln -sf libcrypto.so.1.1 /usr/lib/x86_64-linux-gnu/libcrypto.so.3; \
+        fi; \
     fi; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
