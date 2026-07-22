@@ -74,6 +74,5 @@ ENV USER=container HOME=/home/container
 WORKDIR /home/container
 
 COPY ./entrypoint.sh /entrypoint.sh
-COPY ./runner.sh /opt/scpsl/runner.sh
-RUN chmod 755 /opt/scpsl/runner.sh
+COPY --chmod=755 ./runner.sh /opt/scpsl/runner.sh
 CMD ["/bin/bash", "/entrypoint.sh"]
