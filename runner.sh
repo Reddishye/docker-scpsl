@@ -96,6 +96,16 @@ run_server() {
     #   LocalAdmin → (inner PTY) → start.sh → (outer PTY) → stdout (colored)
     #                                                       → sed strip → .log (clean)
     script -q -f -c "cd /home/container && $cmd" /dev/null 2>&1 | \
+        sed -u -E '/\x1b\[/!{
+            /\[INFO\]/ s/.*/\x1b[0;94m&\x1b[0m/;
+            /\[DEBUG\]/ s/.*/\x1b[0;36m&\x1b[0m/;
+            /\[SUCCEED\]/ s/.*/\x1b[0;32m&\x1b[0m/;
+            /\[SUCCESS\]/ s/.*/\x1b[0;32m&\x1b[0m/;
+            /\[WARN\]/ s/.*/\x1b[0;33m&\x1b[0m/;
+            /\[CRIT\]/ s/.*/\x1b[0;35m&\x1b[0m/;
+            /\[ERROR\]/ s/.*/\x1b[0;31m&\x1b[0m/;
+            /\[FATAL\]/ s/.*/\x1b[0;31m&\x1b[0m/;
+        }' | \
         tee >(sed -u -E 's/\x1b\[[0-9;?]*[a-zA-Z]//g; s/\x1b\][^\x07]*\x07//g; s/\x1b[=?#]//g; s/\x1b[\(\)]//g; s/\x1b[PX^_]//g; s/\r//g' >> "$SERVER_LOG")
 
     local rc=${PIPESTATUS[0]}
