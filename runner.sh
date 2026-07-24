@@ -41,6 +41,28 @@ auto_update() {
     timeout 120 $DD_CMD -app 996560 -depot 996562 -dir /home/container -validate 2>&1 | tail -5 || printf '\033[0;33mUpdate check skipped\033[0m\n'
 }
 
+auto_update_scripts() {
+    [ "$AUTO_UPDATE" != "true" ] && return
+    printf '\033[0;36mChecking for infrastructure script updates...\033[0m\n'
+    local runner_url="https://raw.githubusercontent.com/Reddishye/docker-scpsl/master/runner.sh"
+    local start_url="https://raw.githubusercontent.com/Reddishye/scpsl-egg/master/start.sh"
+    local tmpdir=$(mktemp -d)
+
+    curl -sL --connect-timeout 10 "$runner_url" -o "$tmpdir/runner.sh" 2>/dev/null && \
+        chmod +x "$tmpdir/runner.sh" && \
+        cp "$tmpdir/runner.sh" /opt/scpsl/runner.sh && \
+        printf '\033[0;32m  ✓ runner.sh updated\033[0m\n' || \
+        printf '\033[0;33m  ✗ runner.sh download failed\033[0m\n'
+
+    curl -sL --connect-timeout 10 "$start_url" -o "$tmpdir/start.sh" 2>/dev/null && \
+        chmod +x "$tmpdir/start.sh" && \
+        cp "$tmpdir/start.sh" /home/container/start.sh && \
+        printf '\033[0;32m  ✓ start.sh updated\033[0m\n' || \
+        printf '\033[0;33m  ✗ start.sh download failed\033[0m\n'
+
+    rm -rf "$tmpdir"
+}
+
 setup_logging() {
     local year month day hour minute second ts log_dir
     year=$(date +%Y); month=$(date +%m); day=$(date +%d)
@@ -123,6 +145,7 @@ main() {
     printf '\033[0;36m=== SCP:SL Server Runner ===\033[0m\n'
 
     auto_update
+    auto_update_scripts
     setup_logging
     sync_global_configs
 
