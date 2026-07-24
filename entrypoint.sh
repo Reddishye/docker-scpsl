@@ -82,6 +82,11 @@ if [ "$ARCH" = "aarch64" ]; then
     # store ordering that ARM64 (weak model) doesn't guarantee.
     # Without this, Mono threading primitives break under box64.
     export BOX64_DYNAREC_STRONGMEM=1
+    # BIGBLOCKS=0: Mono JIT genera muchos bloques pequeños. box64 los
+    # fusiona por defecto para acelerar, pero la fusión puede corromper
+    # registros (R14=0 → null deref en LocalAdmin+0x7133a). Esto lo
+    # desactiva para que cada bloque JIT se traduzca individualmente.
+    export BOX64_DYNAREC_BIGBLOCKS=0
 fi
 
 # SSL cert sync
