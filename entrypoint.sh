@@ -78,6 +78,10 @@ if [ "$ARCH" = "aarch64" ]; then
     export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu"
     export DEBUGGER="/usr/local/bin/box64"
     export SSL_CERT_DIR=/etc/ssl/certs
+    # STRONGMEM=1 forces x86 TSO memory model — Mono/C# apps assume
+    # store ordering that ARM64 (weak model) doesn't guarantee.
+    # Without this, Mono threading primitives break under box64.
+    export BOX64_DYNAREC_STRONGMEM=1
 fi
 
 # SSL cert sync
