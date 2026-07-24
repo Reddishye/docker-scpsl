@@ -107,7 +107,7 @@ run_server() {
             gsub(/\033[PX^_]/, "", clean)
             gsub(/\r/, "", clean)
             print clean >> logfile
-            fflush()
+            fflush("")
         }'
 
     local rc=${PIPESTATUS[0]}
