@@ -9,6 +9,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'entrypoint.sh'
+      - 'runner.sh'
   workflow_dispatch:
 
 permissions:

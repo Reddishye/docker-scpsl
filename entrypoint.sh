@@ -82,11 +82,14 @@ if [ "$ARCH" = "aarch64" ]; then
     # store ordering that ARM64 (weak model) doesn't guarantee.
     # Without this, Mono threading primitives break under box64.
     export BOX64_DYNAREC_STRONGMEM=1
-    # BIGBLOCKS=0: Mono JIT genera muchos bloques pequeños. box64 los
-    # fusiona por defecto para acelerar, pero la fusión puede corromper
-    # registros (R14=0 → null deref en LocalAdmin+0x7133a). Esto lo
-    # desactiva para que cada bloque JIT se traduzca individualmente.
-    export BOX64_DYNAREC_BIGBLOCKS=0
+    # BIGBLOCK=0 (sin S — BIGBLOCKS es typo y box64 lo ignora): Mono JIT
+    # genera muchos bloques pequeños y la fusión de bloques de box64 puede
+    # corromper registros. Cada bloque JIT se traduce individualmente.
+    export BOX64_DYNAREC_BIGBLOCK=0
+    # SAFEFLAGS=2: emulación exacta de flags en todos los CALL/RET y edge
+    # cases. Mono usa señales/excepciones constantemente; con SAFEFLAGS=1
+    # un flag corrupto en un retorno cuelga el proceso.
+    export BOX64_DYNAREC_SAFEFLAGS=2
 fi
 
 # SSL cert sync
@@ -106,6 +109,21 @@ if [ "$ARCH" = "aarch64" ] && command -v box64 >/dev/null 2>&1; then
     fi
 fi
 
+# runner.sh runs from a writable copy: /opt/scpsl is read-only inside
+# Pterodactyl, so autoupdate stages runner.sh.new and it is applied here
+# on next start (never overwrite a running bash script — corrupts execution).
+RUNNER_DIR="/home/container/.scpsl"
+RUNNER="$RUNNER_DIR/runner.sh"
+mkdir -p "$RUNNER_DIR"
+if [ -f "$RUNNER.new" ]; then
+    mv "$RUNNER.new" "$RUNNER"
+    printf '\033[0;32mApplied staged runner.sh update\033[0m\n'
+fi
+if [ ! -f "$RUNNER" ]; then
+    cp /opt/scpsl/runner.sh "$RUNNER"
+fi
+chmod +x "$RUNNER"
+
 MODIFIED_STARTUP="eval $(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')"
 
-exec /opt/scpsl/runner.sh "$MODIFIED_STARTUP"
+exec "$RUNNER" "$MODIFIED_STARTUP"

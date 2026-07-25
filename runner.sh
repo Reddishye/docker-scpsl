@@ -46,19 +46,40 @@ auto_update_scripts() {
     printf '\033[0;36mChecking for infrastructure script updates...\033[0m\n'
     local runner_url="https://raw.githubusercontent.com/Reddishye/docker-scpsl/master/runner.sh"
     local start_url="https://raw.githubusercontent.com/Reddishye/scpsl-egg/master/start.sh"
-    local tmpdir=$(mktemp -d)
+    local runner_live="/home/container/.scpsl/runner.sh"
+    local runner_stage="${runner_live}.new"
+    local tmpdir
+    tmpdir=$(mktemp -d)
 
-    curl -sL --connect-timeout 10 "$runner_url" -o "$tmpdir/runner.sh" 2>/dev/null && \
-        chmod +x "$tmpdir/runner.sh" && \
-        cp "$tmpdir/runner.sh" /opt/scpsl/runner.sh && \
-        printf '\033[0;32m  ✓ runner.sh updated\033[0m\n' || \
+    # runner.sh is the script bash is executing right now; overwriting it
+    # live corrupts the interpreter (bash re-reads the file mid-run).
+    # Stage to runner.sh.new — entrypoint.sh applies it on next start.
+    if curl -sL --connect-timeout 10 "$runner_url" -o "$tmpdir/runner.sh" \
+        && [ -s "$tmpdir/runner.sh" ] && bash -n "$tmpdir/runner.sh"; then
+        if cmp -s "$tmpdir/runner.sh" "$runner_live"; then
+            printf '\033[0;32m  ✓ runner.sh already up to date\033[0m\n'
+        else
+            cp "$tmpdir/runner.sh" "$runner_stage"
+            chmod +x "$runner_stage"
+            printf '\033[0;32m  ✓ runner.sh staged (applies on next restart)\033[0m\n'
+        fi
+    else
         printf '\033[0;33m  ✗ runner.sh download failed\033[0m\n'
+    fi
 
-    curl -sL --connect-timeout 10 "$start_url" -o "$tmpdir/start.sh" 2>/dev/null && \
-        chmod +x "$tmpdir/start.sh" && \
-        cp "$tmpdir/start.sh" /home/container/start.sh && \
-        printf '\033[0;32m  ✓ start.sh updated\033[0m\n' || \
+    # start.sh is safe to replace in place: it only runs later, via run_server.
+    if curl -sL --connect-timeout 10 "$start_url" -o "$tmpdir/start.sh" \
+        && [ -s "$tmpdir/start.sh" ] && bash -n "$tmpdir/start.sh"; then
+        if cmp -s "$tmpdir/start.sh" /home/container/start.sh; then
+            printf '\033[0;32m  ✓ start.sh already up to date\033[0m\n'
+        else
+            cp "$tmpdir/start.sh" /home/container/start.sh
+            chmod +x /home/container/start.sh
+            printf '\033[0;32m  ✓ start.sh updated\033[0m\n'
+        fi
+    else
         printf '\033[0;33m  ✗ start.sh download failed\033[0m\n'
+    fi
 
     rm -rf "$tmpdir"
 }
@@ -117,8 +138,10 @@ run_server() {
     # PTY via inner script -qfc. Outer script is redundant and the nested
     # PTY forwarding causes console freeze. Run start.sh directly, pipe
     # through awk for log writing (colored to console, stripped to log).
+    # stdbuf -o0: awk stdout to console unbuffered regardless of awk
+    # flavor (mawk fflush("") support varies) — fixes delayed console output.
     eval "$cmd" 2>&1 | \
-        awk -v logfile="$SERVER_LOG" '
+        stdbuf -o0 awk -v logfile="$SERVER_LOG" '
         {
             print
             clean = $0
